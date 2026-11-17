@@ -30,6 +30,8 @@ npx playwright test --project=desktop tests/player.spec.ts   # chạy một ph�
 | `tests/player.spec.ts` | Máy trạng thái bộ đếm, tạm dừng/tiếp tục, bài trước/sau, phím tắt, giọng đọc |
 | `tests/camera.spec.ts` | Bật/tắt gương, giải phóng camera, lỗi bị chặn quyền / không có camera, lưới căn chỉnh |
 | `tests/library.spec.ts` | Dữ liệu bài tập, bộ lọc vùng, tìm kiếm, lộ trình, playlist |
+| `tests/layout.spec.ts` | Trang không bị tràn ngang trên mọi màn hình (cần Tailwind tải được từ CDN) |
 
 Test dùng đồng hồ giả (`page.clock`) để tua bộ đếm tức thì, và thay `speechSynthesis` bằng bản ghi lại câu đọc.
+Khi máy không truy cập được CDN Tailwind, có thể trỏ biến `TAILWIND_SHIM` tới một file JS tự build để test bố cục vẫn chạy.
 GitHub Actions (`.github/workflows/playwright.yml`) tự chạy test mỗi lần push hoặc mở pull request.

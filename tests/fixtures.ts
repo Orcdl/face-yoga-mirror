@@ -44,6 +44,12 @@ export async function openApp(
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ contentType: 'text/css', body: '' }));
   await page.route('**/fonts.gstatic.com/**', r => r.abort());
 
+  // Optional: serve a locally built Tailwind bundle instead of the CDN (for offline runs).
+  if (process.env.TAILWIND_SHIM) {
+    await page.route('**/cdn.tailwindcss.com/**', r =>
+      r.fulfill({ contentType: 'application/javascript', path: process.env.TAILWIND_SHIM! }));
+  }
+
   // YouTube: serve a tiny thumbnail and an empty player so tests never depend on the network.
   await page.route('**/i.ytimg.com/**', r =>
     opts.blockThumbnails ? r.abort() : r.fulfill({ contentType: 'image/gif', body: TINY_GIF }));

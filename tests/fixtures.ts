@@ -30,7 +30,12 @@ function stubCameraFailure(errorName: string) {
     Promise.reject(new DOMException('stubbed camera failure', errorName));
 }
 
-export async function openApp(page: Page, opts: { camera?: CameraMode; fakeClock?: boolean } = {}) {
+const TINY_GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+
+export async function openApp(
+  page: Page,
+  opts: { camera?: CameraMode; fakeClock?: boolean; blockThumbnails?: boolean } = {},
+) {
   const { camera = 'fake', fakeClock = true } = opts;
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -38,6 +43,11 @@ export async function openApp(page: Page, opts: { camera?: CameraMode; fakeClock
   // Fonts are cosmetic; skip them so tests don't depend on Google Fonts being reachable.
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ contentType: 'text/css', body: '' }));
   await page.route('**/fonts.gstatic.com/**', r => r.abort());
+
+  // YouTube: serve a tiny thumbnail and an empty player so tests never depend on the network.
+  await page.route('**/i.ytimg.com/**', r =>
+    opts.blockThumbnails ? r.abort() : r.fulfill({ contentType: 'image/gif', body: TINY_GIF }));
+  await page.route('**/www.youtube-nocookie.com/**', r => r.fulfill({ contentType: 'text/html', body: '<p>player</p>' }));
 
   await page.addInitScript(stubSpeech);
   if (camera === 'denied') await page.addInitScript(stubCameraFailure, 'NotAllowedError');

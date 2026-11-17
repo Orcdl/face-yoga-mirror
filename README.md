@@ -6,8 +6,12 @@ Mở file bằng Chrome, Edge, Safari hoặc Firefox là dùng được, không 
 - Gương soi trực tiếp từ camera trước (lật ngang như gương) + lưới căn chỉnh khuôn mặt
 - Bộ đếm Chuẩn bị → Giữ → Nghỉ với vòng tiến trình, chuông (Web Audio API) và giọng đọc VI/EN
 - 45 bài tập, 3 lộ trình mục tiêu, bộ lọc theo vùng, playlist tuỳ chỉnh
+- 40 bài có video YouTube người thật làm mẫu, phát ngay trong app (bấm ảnh để tải trình phát); bài còn lại có nút tìm video
 
 > Camera chỉ hoạt động qua HTTPS, `localhost` hoặc khi mở file trực tiếp trên máy.
+> Video YouTube nhúng chạy tốt nhất khi mở qua HTTPS (ví dụ GitHub Pages); nếu trình phát báo lỗi khi mở file trực tiếp, dùng nút "Mở trên YouTube".
+
+Video là của các kênh YouTube bên thứ ba, được chọn theo tên bài và đã kiểm tra là còn tồn tại và cho phép nhúng (11/2026). Danh sách nằm trong trường `video` của từng bài trong `EXERCISES`.
 
 ## Chạy test
 

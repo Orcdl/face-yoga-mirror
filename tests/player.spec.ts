@@ -25,16 +25,54 @@ test('loads with the morning routine ready and no script errors', async ({ page 
   expect(errors).toEqual([]);
 });
 
-test('each exercise links to YouTube video guides that follow the current exercise', async ({ page }) => {
-  await openApp(page);
-  const en = page.locator('#ex-videos a[data-video="en"]');
-  const vi = page.locator('#ex-videos a[data-video="vi"]');
-  await expect(en).toHaveAttribute('target', '_blank');
-  await expect(en).toHaveAttribute('href', 'https://www.youtube.com/results?search_query=' + encodeURIComponent('collarbone lymphatic pumping'));
-  await expect(vi).toHaveAttribute('href', 'https://www.youtube.com/results?search_query=' + encodeURIComponent('face yoga Bơm hõm xương đòn'));
+test.describe('video guides', () => {
+  test('shows the chosen video and plays it in place, pausing the workout', async ({ page }) => {
+    await openApp(page);
+    // First exercise of the morning routine (NK06) has a verified video.
+    const facade = page.locator('#ex-video-player [data-action="video-play"]');
+    await expect(facade).toHaveAttribute('data-vid', 'ZPXJb148l3w');
+    await expect(facade).toContainText('Simple Lymphatic Massage for the Head, Face and Neck');
+    await expect(page.locator('#ex-videos a[data-video="watch"]')).toHaveAttribute('href', 'https://www.youtube.com/watch?v=ZPXJb148l3w');
 
-  await page.click('#btn-next');
-  await expect(en).toHaveAttribute('href', /neck%20lymphatic%20drainage%20stroke$/);
+    await page.click('#btn-play');
+    await facade.click();
+    const iframe = page.locator('#ex-video-player iframe');
+    await expect(iframe).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/ZPXJb148l3w\?autoplay=1/);
+    await expect(page.locator('#btn-play')).toHaveAttribute('aria-label', 'Bắt đầu');
+
+    // Switching exercise removes the player, so the old video stops.
+    await page.click('#btn-next');
+    await expect(iframe).toHaveCount(0);
+    await expect(facade).toHaveAttribute('data-vid', 'ZdLbFmznsH4');
+  });
+
+  test('falls back to a link when thumbnails are blocked', async ({ page }) => {
+    await openApp(page, { blockThumbnails: true });
+    const card = page.locator('#ex-video-player a[data-video="watch"]');
+    await expect(card).toHaveAttribute('href', 'https://www.youtube.com/watch?v=ZPXJb148l3w');
+    await expect(page.locator('#ex-video-player [data-action="video-play"]')).toHaveCount(0);
+  });
+
+  test('exercises without a chosen video offer YouTube searches', async ({ page }) => {
+    await openApp(page);
+    await page.click('[data-tab="library"]');
+    await page.fill('#search', 'Mở to mắt');
+    await page.locator('[data-action="preview"]').first().click();
+    await expect(page.locator('#ex-name')).toHaveText('Mở to mắt nhưng giữ trán phẳng');
+    await expect(page.locator('#ex-video-player')).toBeEmpty();
+    await expect(page.locator('#ex-videos a[data-video="en"]')).toHaveAttribute('href',
+      'https://www.youtube.com/results?search_query=' + encodeURIComponent('wide eyed stare face yoga'));
+    await expect(page.locator('#ex-videos a[data-video="vi"]')).toHaveAttribute('href',
+      'https://www.youtube.com/results?search_query=' + encodeURIComponent('face yoga Mở to mắt nhưng giữ trán phẳng'));
+  });
+
+  test('every embedded video has an id, title and channel', async ({ page }) => {
+    await openApp(page);
+    const bad = await page.evaluate(`EXERCISES.filter(e => e.video &&
+      !(/^[\\w-]{11}$/.test(e.video.id) && e.video.title && e.video.author && ['exact', 'related'].includes(e.video.match))).map(e => e.id)`);
+    expect(bad).toEqual([]);
+    expect(await page.evaluate('EXERCISES.filter(e => e.video).length')).toBe(40);
+  });
 });
 
 test('routine cards show computed durations', async ({ page }) => {

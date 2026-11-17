@@ -25,6 +25,18 @@ test('loads with the morning routine ready and no script errors', async ({ page 
   expect(errors).toEqual([]);
 });
 
+test('each exercise links to YouTube video guides that follow the current exercise', async ({ page }) => {
+  await openApp(page);
+  const en = page.locator('#ex-videos a[data-video="en"]');
+  const vi = page.locator('#ex-videos a[data-video="vi"]');
+  await expect(en).toHaveAttribute('target', '_blank');
+  await expect(en).toHaveAttribute('href', 'https://www.youtube.com/results?search_query=' + encodeURIComponent('collarbone lymphatic pumping'));
+  await expect(vi).toHaveAttribute('href', 'https://www.youtube.com/results?search_query=' + encodeURIComponent('face yoga Bơm hõm xương đòn'));
+
+  await page.click('#btn-next');
+  await expect(en).toHaveAttribute('href', /neck%20lymphatic%20drainage%20stroke$/);
+});
+
 test('routine cards show computed durations', async ({ page }) => {
   await openApp(page);
   const badges = page.locator('#panel-routines h3 + span');

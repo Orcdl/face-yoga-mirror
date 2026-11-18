@@ -210,3 +210,72 @@ test.describe('voice guide', () => {
     expect(await spoken(page)).toEqual([]);
   });
 });
+
+test.describe('Vietnamese video guides (Má & Rãnh cười)', () => {
+  // Opens one exercise from the library by its Vietnamese name.
+  const openExercise = async (page, name: string) => {
+    await page.click('[data-tab="library"]');
+    await page.fill('#search', name);
+    await page.locator('[data-action="preview"]').first().click();
+    await expect(page.locator('#ex-name')).toHaveText(name);
+  };
+
+  test('plays the suggested Vietnamese video from the matching chapter', async ({ page }) => {
+    await openApp(page);
+    await openExercise(page, 'Phồng má chuyển hơi');
+
+    const facade = page.locator('#ex-video-player [data-action="video-play"]');
+    await expect(facade).toHaveAttribute('data-vid', '9XQqQw9pNvE');
+    await expect(facade).toContainText('Video tiếng Việt gợi ý cho bài này · phát từ 3:40');
+    await expect(page.locator('#ex-videos a[data-video="watch"]'))
+      .toHaveAttribute('href', 'https://www.youtube.com/watch?v=9XQqQw9pNvE&t=220s');
+
+    const chapters = page.locator('#ex-video-chapters button');
+    await expect(chapters).toHaveCount(8);
+    await expect(chapters.filter({ hasText: 'Bài tập phồng má' })).toHaveAttribute('aria-pressed', 'true');
+
+    await facade.click();
+    const iframe = page.locator('#ex-video-player iframe');
+    await expect(iframe).toHaveAttribute('src', /embed\/9XQqQw9pNvE\?autoplay=1.*&start=220$/);
+
+    // Jump to another chapter.
+    await chapters.filter({ hasText: 'Giãn cơ nâng môi' }).click();
+    await expect(iframe).toHaveAttribute('src', /&start=85$/);
+    await expect(chapters.filter({ hasText: 'Giãn cơ nâng môi' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('lists the rest of the group and the English video, and plays any of them', async ({ page }) => {
+    await openApp(page);
+    await openExercise(page, 'Mặt cá');
+    await expect(page.locator('#ex-video-player [data-action="video-play"]')).toHaveAttribute('data-vid', 'mwcyaHcMMIk');
+
+    const more = page.locator('#ex-video-more');
+    await expect(more.locator('summary')).toHaveText('Video khác (18) · 17 tiếng Việt');
+    await more.locator('summary').click();
+    const items = page.locator('#ex-video-list [data-action="video-load"]');
+    await expect(items).toHaveCount(18);
+    // The English "Fish Face" video comes first among the alternatives.
+    await expect(items.first()).toContainText('Fish Face');
+
+    // A long full-face routine starts at the cheek segment (5:40), not at 0:00.
+    await items.filter({ hasText: 'Nâng cơ mặt, trẻ hóa da 5 tuổi' }).click();
+    await expect(page.locator('#ex-video-player iframe')).toHaveAttribute('src', /embed\/RzI1QLuZvug\?.*&start=340$/);
+    await expect(more.locator('summary')).toHaveText('Video khác (18) · 17 tiếng Việt');
+    await expect(items.filter({ hasText: 'Nâng cơ mặt, trẻ hóa da 5 tuổi' })).toHaveCount(0);
+  });
+
+  test('every cheek and mouth exercise has a Vietnamese pick; other zones do not', async ({ page }) => {
+    await openApp(page);
+    const res = await page.evaluate(`({
+      missing: EXERCISES.filter(e => (e.zone === 'cheeks' || e.zone === 'mouth') && !e.viPick).map(e => e.id),
+      extra: EXERCISES.filter(e => e.zone !== 'cheeks' && e.zone !== 'mouth' && e.viPick).map(e => e.id),
+      badPick: EXERCISES.filter(e => e.viPick && !VI_VIDEO_GROUPS[e.zone].videos.some(v => v.id === e.viPick.id)).map(e => e.id),
+      groupSize: VI_VIDEO_GROUPS.cheeks.videos.length,
+    })`);
+    expect(res).toEqual({ missing: [], extra: [], badPick: [], groupSize: 18 });
+
+    // A neck exercise keeps its English video and has no Vietnamese list.
+    await expect(page.locator('#ex-video-player [data-action="video-play"]')).toHaveAttribute('data-vid', 'ZPXJb148l3w');
+    await expect(page.locator('#ex-video-more')).toBeHidden();
+  });
+});

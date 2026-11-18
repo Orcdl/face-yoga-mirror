@@ -264,18 +264,78 @@ test.describe('Vietnamese video guides (Má & Rãnh cười)', () => {
     await expect(items.filter({ hasText: 'Nâng cơ mặt, trẻ hóa da 5 tuổi' })).toHaveCount(0);
   });
 
-  test('every cheek and mouth exercise has a Vietnamese pick; other zones do not', async ({ page }) => {
+  test('Vietnamese coverage: every cheek, mouth and eye exercise; no other zone', async ({ page }) => {
     await openApp(page);
-    const res = await page.evaluate(`({
-      missing: EXERCISES.filter(e => (e.zone === 'cheeks' || e.zone === 'mouth') && !e.viPick).map(e => e.id),
-      extra: EXERCISES.filter(e => e.zone !== 'cheeks' && e.zone !== 'mouth' && e.viPick).map(e => e.id),
-      badPick: EXERCISES.filter(e => e.viPick && !VI_VIDEO_GROUPS[e.zone].videos.some(v => v.id === e.viPick.id)).map(e => e.id),
-      groupSize: VI_VIDEO_GROUPS.cheeks.videos.length,
-    })`);
-    expect(res).toEqual({ missing: [], extra: [], badPick: [], groupSize: 18 });
+    const res = await page.evaluate(`(() => {
+      const covered = ['cheeks', 'mouth', 'eyes'];
+      const has = e => VI_VIDEO_GROUPS[e.zone] && VI_VIDEO_GROUPS[e.zone].videos.some(v => v.exercises.some(x => x.ma === e.id));
+      return {
+        missing: EXERCISES.filter(e => covered.includes(e.zone) && !has(e)).map(e => e.id),
+        extra: EXERCISES.filter(e => !covered.includes(e.zone) && (VI_VIDEO_GROUPS[e.zone] || e.viCount)).map(e => e.id),
+        badRef: Object.values(VI_VIDEO_GROUPS).flatMap(g => g.videos.flatMap(v => v.exercises.filter(x => !EX_BY_ID[x.ma]).map(x => v.id + ':' + x.ma))),
+        sizes: [VI_VIDEO_GROUPS.cheeks.videos.length, VI_VIDEO_GROUPS.eyes.videos.length],
+        sameGroup: VI_VIDEO_GROUPS.cheeks === VI_VIDEO_GROUPS.mouth,
+      };
+    })()`);
+    expect(res).toEqual({ missing: [], extra: [], badRef: [], sizes: [18, 11], sameGroup: true });
 
     // A neck exercise keeps its English video and has no Vietnamese list.
     await expect(page.locator('#ex-video-player [data-action="video-play"]')).toHaveAttribute('data-vid', 'ZPXJb148l3w');
     await expect(page.locator('#ex-video-more')).toBeHidden();
+  });
+});
+
+test.describe('Vietnamese video guides (Mắt & lông mày)', () => {
+  const openExercise = async (page, name: string) => {
+    await page.click('[data-tab="library"]');
+    await page.fill('#search', name);
+    await page.locator('[data-action="preview"]').first().click();
+    await expect(page.locator('#ex-name')).toHaveText(name);
+  };
+
+  test('starts the first video that has this exercise, at its timestamp', async ({ page }) => {
+    await openApp(page);
+    await openExercise(page, 'Nheo mí dưới');
+
+    const facade = page.locator('#ex-video-player [data-action="video-play"]');
+    await expect(facade).toHaveAttribute('data-vid', 'tUHiDb19JZc');
+    await expect(facade).toContainText('Video tiếng Việt cho bài này · phát từ 0:22');
+
+    // Chapters are the app exercises inside the video, in time order.
+    const chapters = page.locator('#ex-video-chapters button');
+    await expect(chapters).toHaveText([
+      '0:16 Nâng lông mày', '0:22 Nheo mí dưới', '0:37 Gõ & xoa vòng hốc mắt',
+      '1:15 Nhìn tập trung xa - gần & xoay mắt', '4:10 Chữ V (nâng mắt)',
+    ]);
+    await expect(chapters.filter({ hasText: 'Nheo mí dưới' })).toHaveAttribute('aria-pressed', 'true');
+
+    await facade.click();
+    await expect(page.locator('#ex-video-player iframe')).toHaveAttribute('src', /embed\/tUHiDb19JZc\?.*&start=22$/);
+  });
+
+  test('lists the other videos with this exercise first, each at its own timestamp', async ({ page }) => {
+    await openApp(page);
+    await openExercise(page, 'Nheo mí dưới');
+    const more = page.locator('#ex-video-more');
+    await expect(more.locator('summary')).toHaveText('Video khác (11) · 10 tiếng Việt');
+    await more.locator('summary').click();
+
+    const items = page.locator('#ex-video-list [data-action="video-load"]');
+    const withThis = items.filter({ hasText: 'Có bài này' });
+    await expect(withThis).toHaveCount(5);
+    await expect(withThis.first()).toContainText('Có bài này · từ 4:22');   // 729CjQZUxuo, t = 262
+
+    await items.filter({ hasText: '5 bài tập TỐT NHẤT cải thiện MẮT XỤP MÍ' }).click();
+    await expect(page.locator('#ex-video-player iframe')).toHaveAttribute('src', /embed\/9PMab71eDtg\?.*&start=510$/);
+  });
+
+  test('Mắt cú now has a Vietnamese video; the library shows video counts', async ({ page }) => {
+    await openApp(page);
+    await openExercise(page, 'Mắt cú (ống nhòm)');
+    await expect(page.locator('#ex-video-player [data-action="video-play"]')).toHaveAttribute('data-vid', 'iUVkzVRSYlw');
+    await expect(page.locator('#ex-video-player [data-action="video-play"]')).toContainText('phát từ 6:00');
+
+    await page.fill('#search', 'Nheo mí dưới');
+    await expect(page.locator('#library article')).toContainText('▶ 6 video tiếng Việt');
   });
 });

@@ -35,5 +35,13 @@ for (const blockThumbnails of [false, true]) {
       await page.click('#btn-next');
       await noSideScroll(page);
     }
+
+    // And every eye exercise (several Vietnamese videos, long chapter rows).
+    await page.evaluate(`loadQueue(EXERCISES.filter(e => e.zone === 'eyes').map(e => ({ id: e.id })), 'Mắt', { scroll: false })`);
+    for (let i = 0; i < 6; i++) {
+      await page.locator('#ex-video-more summary').click();
+      await noSideScroll(page);
+      if (i < 5) await page.click('#btn-next');
+    }
   });
 }

@@ -7,12 +7,12 @@ Mở file bằng Chrome, Edge, Safari hoặc Firefox là dùng được, không 
 - Bộ đếm Chuẩn bị → Giữ → Nghỉ với vòng tiến trình, chuông (Web Audio API) và giọng đọc VI/EN
 - 45 bài tập, 3 lộ trình mục tiêu, bộ lọc theo vùng, playlist tuỳ chỉnh
 - 40 bài có video YouTube người thật làm mẫu, phát ngay trong app (bấm ảnh để tải trình phát); bài còn lại có nút tìm video
-- Nhóm Má & Rãnh cười (12 bài) có 18 video tiếng Việt: mỗi bài phát sẵn một video gợi ý từ đúng đoạn, có nút nhảy theo chapter và danh sách video khác của nhóm
+- Video tiếng Việt theo vùng: Má & Rãnh cười (12 bài, 18 video) và Mắt & lông mày (6 bài, 11 video). Mỗi bài phát sẵn video có bài đó từ đúng giây, có nút nhảy theo chapter và danh sách video khác của nhóm
 
 > Camera chỉ hoạt động qua HTTPS, `localhost` hoặc khi mở file trực tiếp trên máy.
 > Video YouTube nhúng chạy tốt nhất khi mở qua HTTPS (ví dụ GitHub Pages); nếu trình phát báo lỗi khi mở file trực tiếp, dùng nút "Mở trên YouTube".
 
-Video là của các kênh YouTube bên thứ ba, được chọn theo tên bài và đã kiểm tra là còn tồn tại và cho phép nhúng (11/2026). Danh sách nằm trong trường `video` của từng bài trong `EXERCISES`; video tiếng Việt theo nhóm nằm trong `VI_VIDEO_GROUPS` (kiểm tra ngày 18/11/2026), bài nào phát video nào và từ giây nào nằm trong trường `viPick`.
+Video là của các kênh YouTube bên thứ ba, được chọn theo tên bài và đã kiểm tra là còn tồn tại và cho phép nhúng (11/2026). Danh sách nằm trong trường `video` của từng bài trong `EXERCISES`; video tiếng Việt theo nhóm nằm trong `VI_VIDEO_GROUPS` (kiểm tra ngày 18/11/2026), mỗi video ghi bài nào có trong video và từ giây nào trong trường `exercises`.
 
 ## Chạy test
 
